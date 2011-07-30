@@ -242,11 +242,18 @@ Functions
 
 .. code-block:: scala
 
-    def process(f:(String) => Boolean) = {
-        if (f("foo")) {
-            println("bar")
-        }
-    }
+    val plus = (a:Int, b:Int) => a + b
+    val multi = (a:Int, b:Int) => a * b
+    plus(1, 2)
+    multi(2, 3)
+    
+    def combine(f:(Int, Int) => Int) = f(2, 3)
+    
+    combine(plus)
+    combine(multi)
+    combine((a:Int, b:Int) => a / b)
+    combine(_ + _)
+    combine(_ * _)
 
 ----
 
