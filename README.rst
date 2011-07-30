@@ -21,13 +21,14 @@ Introduction
 * JVM (obviously)
 * Statically typed
 * "Multi-paradigm" programming language
-    * Object Orientated
-    * Functional
+* Object Orientated
+* Functional
 * `Big names <http://www.scala-lang.org/node/1658>`_
-    * `Twitter <http://www.twitter.com/>`_
-    * `Foursquare <https://foursquare.com/>`_
-    * `LinkedIn <http://www.linkedin.com/>`_
-    * `Guardian.co.uk <http://www.guardian.co.uk/>`_
+
+- `Twitter <http://www.twitter.com/>`_
+- `Foursquare <https://foursquare.com/>`_
+- `LinkedIn <http://www.linkedin.com/>`_
+- `Guardian.co.uk <http://www.guardian.co.uk/>`_
 
 ----
 
@@ -284,7 +285,6 @@ Functions
 Collections
 ===========
 
-* Java
 * Google Collections (Guava)
 
 .. code-block:: java
@@ -296,6 +296,13 @@ Collections
                 return i + "";
             }
     });
+
+    // Less lines of code
+    // Easier to read?
+    List<String> strings = new ArrayList<String>() {
+    for (Integer i : ints) {
+        strings.add(i + "")
+    }
 
 ----
 
@@ -327,15 +334,16 @@ Collections
 Tuples
 ======
 
-* Java
+* Returning two or more objects from a method
+* Have to create a 'temporary' class just for that method
 
 .. code-block:: java
 
-    public Tuple<String, Integer> returnSomething() = {
-        return new Tuple("a", 1)
+    public TempObject<String, Integer> returnSomething() = {
+        return new TempObject("foo", 1);
     }
-    Tuple<String, Integer> t = returnSomething(1)
-    t.first.contains("1")
+    TempObject<String, Integer> t = returnSomething(1);
+    t.first.substring(t.second);
 
 * Scala
 
@@ -344,9 +352,9 @@ Tuples
     def returnSomething(i:Int) = (i.toString, i)
     val (a, b) = returnSomething(1)
     // Type safe
-    a.contains("1")
+    a.substring(b)
     val t = returnSomething(1)
-    t._1.contains("1")
+    t._1.substring(t._2)
 
 ----
 
@@ -400,6 +408,7 @@ Traits
 
 * Analogous to interfaces, but can have implementation as well.
 * aka Mixins
+* Multiple inheritance
 
 .. code-block:: scala
 
