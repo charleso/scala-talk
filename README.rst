@@ -98,6 +98,9 @@ Val vs Var
 ==========
 
 * Emphasis on immutability in Scala
+    - Better for concurrency
+    - No locks
+    - Easier to reason about
 
 .. code-block:: scala
 
