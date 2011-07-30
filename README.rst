@@ -1,21 +1,33 @@
-Scala
-=====
+================
+A Taste of Scala
+================
+
+----
+
+Me
+==
+
+* Charles O'Farrell
+* Mincom (4 years)
+* @charlesofarrell
 
 ----
 
 Introduction
 ============
 
-* Martin Odersky
+* Martin Odersky (2003)
 * "Scalable Language"
+* JVM (obviously)
+* Statically typed
 * "Multi-paradigm" programming language
-    - Object Orientated
-    - Functional
+    * Object Orientated
+    * Functional
 * `Big names <http://www.scala-lang.org/node/1658>`_
-    - `Twitter <http://www.twitter.com/>`_
-    - `Foursquare <https://foursquare.com/>`_
-    - `LinkedIn <http://www.linkedin.com/>`_
-    - `Guardian.co.uk <http://www.guardian.co.uk/>`_
+    * `Twitter <http://www.twitter.com/>`_
+    * `Foursquare <https://foursquare.com/>`_
+    * `LinkedIn <http://www.linkedin.com/>`_
+    * `Guardian.co.uk <http://www.guardian.co.uk/>`_
 
 ----
 
@@ -30,6 +42,8 @@ Hello World
         }
     }
 
+.notes: Note the of semi-colon
+
 ----
 
 Companion Objects
@@ -40,25 +54,49 @@ Companion Objects
 .. code-block:: java
 
     public class Main {
+
+        private static String staticField;
+        private String normalField;
         
+        public static void main(String[] args) { }
+        
+        public void memberMethod() { }
+        
+        public static void utilMethod() { }
     }
+
+----
+
+Companion Objects
+=================
 
 * Scala
 
 .. code-block:: scala
 
     object Main {
+        var staticField:String;
         def main(args:Array[String]) {
-            println("Hello world")
+            objectAsType(this)
+        }
+        
+        def utilMethod() = {}
+        
+        def objectAsType(m:Main.type) = {
+            m.utilMethod()
         }
     }
-
-.notes: Note the of semi-colon
+    class Main {
+        var normalField;
+        def memberMethod() = {}
+    }
 
 ----
 
 Val vs Var
 ==========
+
+* Emphasis on immutability in Scala
 
 .. code-block:: scala
 
@@ -77,51 +115,68 @@ Type Inference
 
 .. code-block:: java
 
-    List<Map<String, String>> listOfMap = new ArrayList<>()
-    List<Map<String, String>> listOfMap2 = listOfMap
+    List<Map<String, Map<String, String>>> listOfMaps = new ArrayList<>()
+    Map<String, Map<String, String>> mapOfMaps = listOfMaps.get(0)
+    Map<String, String> map = mapOfMaps.get("foo")
 
 * Scala
 
 .. code-block:: scala
 
-    val listOfMap = List(Map("a" -> "b"))
-    val listOfMap2 = listOfMap // inferred
+    val listOfMaps = List(Map("a" -> Map("b" -> "c")))
+    val mapOfMaps = listOfMaps.get(0).get
+    val map = mapOfMaps.get("foo").get
+
+* Not as good as Haskell (eg parameters always need types)
+* Often need types to help compiler
 
 ----
 
-Syntax
-======
+DSLs
+====
+
+* Optional syntax
 
 .. code-block:: scala
 
+    a.someMethod("value");
     a.someMethod("value")
     a someMethod("value")
     a someMethod "value"
 
-* Good for DSLs
-* TODO Example
+* Great for DSLs
 
 .. code-block:: scala
 
-    1 + 2
-    // Actually
-    1.+(2)
+    new Order().to(buy(sharesOf(100, "IBM")))
+        .maxUnitPrice(300)
+        .using(premiumPricing)
+
+    new Order to buy(100 sharesOf "IBM")
+        maxUnitPrice 300
+        using premiumPricing
 
 ----
 
-Method names
-============
+DSLs
+====
+
+* Unicode method names
+    - *not* operator overloading
 
 .. code-block:: scala
 
-    def +(i:Int, j:Int) = ...
-    +(1, 2)
-    // TODO
+    class Int {
+        def +(b:Int) = ...
+    }
+    1 + 2 == 1.+(2)
 
 ----
 
 Inner defs
 ==========
+
+* Java
 
 .. code-block:: java
 
@@ -134,7 +189,7 @@ Inner defs
         return i + j
     }
 
-* Relies on IDE to warn about unused
+* Relies on IDE to warn about unused methods
 
 .. code-block:: scala
 
@@ -179,23 +234,93 @@ Default parameters
 
 ----
 
-Collections
-===========
+Functions
+=========
 
-* Very powerful
+* First class functions
+
+.. code-block:: scala
+
+    def process(f:(String) => Boolean) = {
+        if (f("foo")) {
+            println("bar")
+        }
+    }
+
+----
+
+Functions
+=========
+
+* Java 7 - now with New and Improved™ ARM block
 
 .. code-block:: java
 
-    // TODO Google collection example
+    try (FileInputStream in = new FileInputStream("foo.txt")) {
+        // Do something
+    }
 
-* Scala
+* Should really just be a function call
+
+.. code-block:: scala
+
+    def arm[C <: Closeable, T](closable: C)(f: (C) => T) = {
+        try {
+            f(closable)
+        } finally {
+            closable.close()
+        }
+    }
+    
+    arm(new FileInputStream("foo.txt")) { in =>
+        // Do something
+    }
+
+* Better version here:
+    - http://wiki.github.com/jsuereth/scala-arm/
+
+----
+
+Collections
+===========
+
+* Java
+* Google Collections (Guava)
+
+.. code-block:: java
+
+    List<Integer> ints = Arrays.asList(1, 2, 3, 4);
+    List<String> strings = Lists.transform(strings , new Function<String, Integer>() {
+            @Override
+            public String apply(Integer i) {
+                return i + "";
+            }
+    });
+
+----
+
+Collections
+===========
+
+* Scala has an amazing collections library
+* Immutable by default, otherwise import mutable package
 
 .. code-block:: scala
 
     val list = List(1, 2, 3, 4)
-    println(list.map((a:String) => a + 1))
-    // List(2,3,4,5)
-    println(list.map(_ + 1))
+    list.map((a:Int) => a + "")
+    list.map((a) => a + "")
+    list.map(_ + "")
+    list.map(_ + 1)
+    list.filter(_ > 2)
+    list.sort(_ > _)
+    list.reverse
+    list += 3 // Mutable
+    list ++ list
+    
+    val map = Map("a" -> "b")
+    map.mapElements(_ toUpperCase)
+    map.filter(_ contains "x")
 
 ----
 
@@ -210,7 +335,7 @@ Tuples
         return new Tuple("a", 1)
     }
     Tuple<String, Integer> t = returnSomething(1)
-    println(t.first.contains("1"))
+    t.first.contains("1")
 
 * Scala
 
@@ -219,9 +344,9 @@ Tuples
     def returnSomething(i:Int) = (i.toString, i)
     val (a, b) = returnSomething(1)
     // Type safe
-    println(a.contains("1"))
+    a.contains("1")
     val t = returnSomething(1)
-    println(t._1.contains("1"))
+    t._1.contains("1")
 
 ----
 
@@ -250,27 +375,48 @@ Pattern Matching
 
 .notes: No breaks
 
+----
+
+Pattern Matching
+================
+
+* But wait, there's more
+
 .. code-block:: scala
 
-    string bean {
-        case Bean(1, 2) => ...
-        case Bean(3, 4) => ...
-        case _ => ...
+    val t = (1, 2)
+    t match {
+      case (2, _) => ...
+      case (_, 3) => ...
+      case (a, b) if a == b => ...
+      case (a, b) if a > b => ...
+      case _ => ...
     }
 
 ----
 
-Objects
-=======
+Traits
+======
 
-* TODO
+* Analogous to interfaces, but can have implementation as well.
+* aka Mixins
 
-----
+.. code-block:: scala
 
-Functions
-=========
+    trait Ordered[A] {
+        def compare(that: A): Int
 
-* TODO
+        def <  (that: A): Boolean = (this compare that) <  0
+        def >  (that: A): Boolean = (this compare that) >  0
+        def <= (that: A): Boolean = (this compare that) <= 0
+        def >= (that: A): Boolean = (this compare that) >= 0
+    }
+
+    class Something(val s:String) extends Ordered[String] {
+        override compare(that:String) = s compare that
+    }
+    
+    new Something("a") < "b"
 
 ----
 
@@ -324,12 +470,25 @@ Case Classes
     val bean = new Bean(1, 2)
     bean.x = 3
 
-.notes: Cheating - you _can_ 'generate' getters/settings in Java
+* Free hashCode/toString methods
+* Free 'companion' object with apply
+* Can be used in pattern matching
+
+.. code-block:: scala
+
+    val b = Bean(1, 2)
+    b match {
+      case Bean(3, 4) => ...
+      case Bean(a, b) if a == b => ...
+      case _ => ...
+    }
 
 ----
 
 Properties
 ==========
+
+* What happens if you need to change behaviour of setter/getter?
 
 .. code-block:: scala
 
@@ -337,7 +496,6 @@ Properties
       def x = _x
       def x_=(v: Int) { _x = v }
     }
-    // Still works
     bean.x = 3
 
 ----
@@ -345,15 +503,20 @@ Properties
 Death to null
 =============
 
+* `"Billion-dollar mistake" <http://en.wikipedia.org/wiki/Pointer_%28computing%29#Null_pointer>`_
+    - C.A.R. Hoare - Algol W (1965)
+
 * Who has written this?
 
 .. code-block:: java
 
-    String a = someMethod()
-    String b = someOtherMethod()
-    if (a != null && b != null && 
-        a.contains("hello") && b.contains("world")) {
-        doSomething()
+    Map<String, Map<String, String>> map = new HashMap<String, Map<String, String>>();
+    Map<String, String> a = map.get("a");
+    if (a != null) {
+        String b = a.get("b");
+        if (b != null) {
+            doSomething(b)
+        }
     }
 
 -----
@@ -361,7 +524,8 @@ Death to null
 Death to null
 ^^^^^^^^^^^^^
 
-* TODO - Do I want to show this?!?
+* Introducing Option (aka Maybe in Haskell)
+* Collection of None or Some element
 
 .. code-block:: scala
 
@@ -374,27 +538,78 @@ Death to null
 Death to null
 ^^^^^^^^^^^^^
 
+* Java
+
+.. code-block:: java
+
+    /**
+     * May return null
+     */
+    public String get(String key) {
+        if (containsKey(value)) {
+            return value;
+        }
+        return null;
+    }
+
+* Scala
+
 .. code-block:: scala
 
-    val value = Some("not null")
+    def get(val:String):Option[String] = {
+        if (containsKey(val)) {
+            Some(value)
+        } else {
+            None // ie null
+        }
+    }
+
+* Types as documentation
+* Much more powerful than @NotNull annotation
 
 -----
 
 Death to null
 ^^^^^^^^^^^^^
 
-* TODO - Bad example!
+* Better?
 
 .. code-block:: scala
 
-    for {
-        a <- someMethod
-        b <- someOtherMethod
-        if (a contains "hello")
-        if (b contains "world")
-    } {
-        doSomething
+    val map = Map("a" -> Map("b" -> "c"))
+    val a = map.get("a")
+    if (a.isDefined) {
+        val b = a.get.get("b")
+        if (b.isDefined) {
+            doSomething(b.get)
+        }
     }
+
+-----
+
+Death to null
+^^^^^^^^^^^^^
+
+* Only joking. :)
+
+.. code-block:: scala
+
+    val map = Map("a" -> Map("b" -> "c"))
+    for (a <- map("a"); b <- a.get("b")) {
+        doSomething(b)
+    }
+
+* Just a collection - lots of useful functions
+
+.. code-block:: scala
+
+    val option:Option[String] = None
+    val string:String = option.getOrElse("a")
+    option.map(_ toUpperCase)
+    option.filter(_ contains "x")
+    option.foreach(println _)
+
+* Nulls are only needed in Scala for Java compatibility
 
 ----
 
@@ -402,6 +617,7 @@ Pimp my library
 ===============
 
 * Wouldn't it be nice if we could add methods to existing classes?
+* Odersky - http://www.artima.com/weblogs/viewpost.jsp?thread=179766
 
 .. code-block:: scala
 
@@ -409,31 +625,40 @@ Pimp my library
         // ...
     }
     
-* 'until' is actually not defined on Int
-    - RichInt
+* 'until' is actually not defined on Int - RichInt
 
 .. code-block:: scala
 
     class RichInt(val i:Int) {
-        def plus(j:Int):Int = 1 + j
+        def plus(j:Int):Int = i + j
     }
 
     implicit def int2rich(i:Int):RichInt = new RichInt(i)
     
-    println(1 plus 2)
-    // 3
+    1 plus 2
 
 * Searches the 'scope' for methods that return a type with missing method
 * Very useful - but use with care!
 
 ----
 
+What's the catch?
+=================
+
+* Slow compiler
+* IDE support still lacking
+* Traits depend on compiled version of library
+    - ie Causes binary incompatibility
+
+----
+
 Conclusion
 ==========
 
-* Scala is awesome
-* 99% Backwards compatibility with Java
-* Start tomorrow!
+* Scala is like Java, only better
+* Much, much more - only scratched the surface
+* Full compatibility with Java
+* Start using it today!
 
 ----
 
