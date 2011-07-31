@@ -334,10 +334,19 @@ Collections
     list.reverse
     list += 3 // Mutable
     list ++ list
+    val (small, big) = list partition (_ < 3)
     
     val map = Map("a" -> "b")
     map.mapElements(_ toUpperCase)
     map.filter(_ contains "x")
+
+* Powerful and easy parallel support
+
+.. code-block:: scala
+
+    list.par map(_ + 1)
+    list.par filter(_ > 2)
+    // etc
 
 ----
 
