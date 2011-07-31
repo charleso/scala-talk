@@ -422,6 +422,31 @@ Pattern Matching
 
 ----
 
+Regex
+=====
+
+* Java
+
+.. code-block:: java
+
+    Pattern emailParser = Pattern.compile("([\\w\\d\\-\\_]+)(\\+\\d+)?@([\\w\\d\\-\\.]+)");
+    Matcher m = emailParser.matcher("zippy@scalaisgreat.com");
+    if (m.matches()) {
+        String name = m.group(1);
+        String num = m.group(2);
+        String domain = m.group(3);
+    }
+
+* Scala - using the 'unapply' method
+
+.. code-block:: scala
+
+    val EmailParser = """([\w\d\-\_]+)(\+\d+)?@([\w\d\-\.]+)""".r
+    val s = "zippy@scalaisgreat.com"
+    val EmailParser(name, num, domain) = s
+
+----
+
 Traits
 ======
 
