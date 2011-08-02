@@ -423,6 +423,28 @@ Pattern Matching
 
 ----
 
+Pattern Matching
+================
+
+* Java 7 - now with New and Improved™ multiple exception catching
+
+.. code-block:: java
+
+    try {
+    } catch(ExceptionA | ExceptionB e) {
+    }
+
+* Scala
+
+.. code-block:: scala
+
+    try {
+    } catch {
+        case e @ (_:ExceptionA | _:ExceptionB) => println(e)
+    }
+
+----
+
 Regex
 =====
 
