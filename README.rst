@@ -643,8 +643,6 @@ Death to null
 Death to null
 ^^^^^^^^^^^^^
 
-* Java
-
 .. code-block:: java
 
     /**
@@ -657,7 +655,8 @@ Death to null
         return null;
     }
 
-* Scala
+* Introducing Option (aka Maybe in Haskell)
+* Collection of None or Some element
 
 .. code-block:: scala
 
@@ -671,20 +670,6 @@ Death to null
 
 * Types as documentation
 * Much more powerful than @NotNull annotation
-
------
-
-Death to null
-^^^^^^^^^^^^^
-
-* Introducing Option (aka Maybe in Haskell)
-* Collection of None or Some element
-
-.. code-block:: scala
-
-    trait Option[T]
-    case class Some[T](val t:T) extends Option[T]
-    case object None extends Option[Nothing]
 
 -----
 
