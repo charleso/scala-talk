@@ -16,14 +16,18 @@ Me
 Introduction
 ============
 
-* Martin Odersky (2003)
 * "Scalable Language"
+* Martin Odersky (1999 - 2003)
 * JVM (obviously)
-* Statically typed
 * "Multi-paradigm" programming language
 * Object Orientated
 * Functional
-* `Big names <http://www.scala-lang.org/node/1658>`_
+* **Statically typed**
+
+----
+
+Big names
+=========
 
 - `Twitter <http://www.twitter.com/>`_
 - `Foursquare <https://foursquare.com/>`_
@@ -128,7 +132,7 @@ Type Inference
 .. code-block:: scala
 
     val listOfMaps = List(Map("a" -> Map("b" -> "c")))
-    val mapOfMaps = listOfMaps.get(0).get
+    val mapOfMaps = listOfMaps(0)
     val map = mapOfMaps.get("foo").get
 
 * Not as good as Haskell (eg parameters always need types)
@@ -143,27 +147,19 @@ DSLs
 
 .. code-block:: scala
 
-    a.someMethod("value");
-    a.someMethod("value")
-    a someMethod("value")
-    a someMethod "value"
+    a.someMethod("one value");
+    a someMethod "one value"
+    a someMethod ("two", "values")
 
-* Great for DSLs
+* Last argument can be passed as block
 
 .. code-block:: scala
 
-    new Order().to(buy(sharesOf(100, "IBM")))
-        .maxUnitPrice(300)
-        .using(premiumPricing)
+    def synchronized(o:AnyRef)(f:  => Unit) = f
 
-    new Order to buy(100 sharesOf "IBM")
-        maxUnitPrice 300
-        using premiumPricing
-
-----
-
-DSLs
-====
+    synchronized(this) {
+        // ...
+    }
 
 * Unicode method names
     - *not* operator overloading
@@ -174,6 +170,62 @@ DSLs
         def +(b:Int) = ...
     }
     1 + 2 == 1.+(2)
+
+----
+
+DSL
+===
+
+* Java 7 - now with New and Improved™ ARM block
+
+.. code-block:: java
+
+    try (FileInputStream in = new FileInputStream("foo.txt")) {
+        // Do something
+    }
+
+* Should really just be a function call
+
+.. code-block:: scala
+
+    def arm[C <: Closeable](closable: C)(f: (C) => Unit) = {
+      try {
+        f(closable)
+      } finally {
+        closable.close()
+      }
+    }
+
+    arm(new FileInputStream("foo.txt")) { in =>
+        // Do something
+    }
+
+* Better version here:
+    - http://wiki.github.com/jsuereth/scala-arm/
+
+----
+
+DSLs
+====
+
+* Real world example - Gameboy Emulator
+
+.. code-block:: scala
+
+    def accum(r1: Register, r2: Register) {
+        r1.setValue(r2.getValue() << 4)
+    }
+
+.. code-block:: scala
+
+    class Register(var value: Int) {
+        def :=(i:Int) = { value = i }
+        def <<(i: Int) = value << i
+    }
+
+    def accum(r1: Register, r2: Register) {
+        r1 := r2 << 4
+    }
 
 ----
 
@@ -201,6 +253,32 @@ Inner defs
         def helpMethod(i: Int, j: Int) = i + j
         helpMethod(1, 2)
         helpMethod(3, 4)
+    }
+
+----
+
+Imports
+=======
+
+* Java
+
+.. code-block:: java
+
+    import java.util.List
+    import java.util.Map
+    import java.util.Set
+
+* Scala
+
+.. code-block:: scala
+
+    import java.util.{List, Map, Set}
+    import java.util.{Collections => C}
+    import java.util.{Arrays => _}
+    import java.util._
+    
+    def someMethod = {
+        import java.util.ConcurrentMap
     }
 
 ----
@@ -246,7 +324,7 @@ Functions
 .. code-block:: scala
 
     val plus = (a:Int, b:Int) => a + b
-    val multi = (a:Int, b:Int) => a * b
+    val multi:Function2[Int, Int, Int] = (a:Int, b:Int) => a * b
     plus(1, 2)
     multi(2, 3)
     
@@ -263,32 +341,21 @@ Functions
 Functions
 =========
 
-* Java 7 - now with New and Improved™ ARM block
-
-.. code-block:: java
-
-    try (FileInputStream in = new FileInputStream("foo.txt")) {
-        // Do something
-    }
-
-* Should really just be a function call
+* Every object is a function
 
 .. code-block:: scala
 
-    def arm[C <: Closeable, T](closable: C)(f: (C) => T) = {
-        try {
-            f(closable)
-        } finally {
-            closable.close()
-        }
+    object List {
+        def apply(args:String*) = new List(args.toArray)
     }
-    
-    arm(new FileInputStream("foo.txt")) { in =>
-        // Do something
+    class List(args:Array[String]) {
+        def apply(i:Int) = args(i)
     }
 
-* Better version here:
-    - http://wiki.github.com/jsuereth/scala-arm/
+    val l = List("a", "b", "c")
+    val string = l(3)
+    val map = Map("a" -> "b")
+    val b = map("a")
 
 ----
 
@@ -332,13 +399,12 @@ Collections
     list.filter(_ > 2)
     list.sort(_ > _)
     list.reverse
-    list += 3 // Mutable
     list ++ list
     val (small, big) = list partition (_ < 3)
     
     val map = Map("a" -> "b")
     map.mapElements(_ toUpperCase)
-    map.filter(_ contains "x")
+    map.filterKeys(_ contains "x")
 
 * Powerful and easy parallel support
 
@@ -346,7 +412,31 @@ Collections
 
     list.par map(_ + 1)
     list.par filter(_ > 2)
-    // etc
+
+----
+
+Collections
+===========
+
+* For comprehensions
+
+.. code-block:: scala
+
+    for (i <- List(1, 3, 4, 7)) {
+        // do something
+    }
+
+    for (i <- 1 until 10) {
+        // do something
+    }
+
+    for {
+        i <- List(1, 3, 4, 7)
+        j <- List(2, 4, 6, 8)
+        if i + j > 3
+    } {
+        // do something
+    }
 
 ----
 
@@ -420,53 +510,6 @@ Pattern Matching
       case (a, b) if a > b => ...
       case _ => ...
     }
-
-----
-
-Pattern Matching
-================
-
-* Java 7 - now with New and Improved™ multiple exception catching
-
-.. code-block:: java
-
-    try {
-    } catch(ExceptionA | ExceptionB e) {
-    }
-
-* Scala
-
-.. code-block:: scala
-
-    try {
-    } catch {
-        case e @ (_:ExceptionA | _:ExceptionB) => println(e)
-    }
-
-----
-
-Regex
-=====
-
-* Java
-
-.. code-block:: java
-
-    Pattern emailParser = Pattern.compile("([\\w\\d\\-\\_]+)(\\+\\d+)?@([\\w\\d\\-\\.]+)");
-    Matcher m = emailParser.matcher("zippy@scalaisgreat.com");
-    if (m.matches()) {
-        String name = m.group(1);
-        String num = m.group(2);
-        String domain = m.group(3);
-    }
-
-* Scala - using the 'unapply' method
-
-.. code-block:: scala
-
-    val EmailParser = """([\w\d\-\_]+)(\+\d+)?@([\w\d\-\.]+)""".r
-    val s = "zippy@scalaisgreat.com"
-    val EmailParser(name, num, domain) = s
 
 ----
 
@@ -580,7 +623,7 @@ Death to null
 =============
 
 * `"Billion-dollar mistake" <http://en.wikipedia.org/wiki/Pointer_%28computing%29#Null_pointer>`_
-    - C.A.R. Hoare - Algol W (1965)
+    - Tony Hoare - Algol W (1965)
 
 * Who has written this?
 
@@ -594,20 +637,6 @@ Death to null
             doSomething(b)
         }
     }
-
------
-
-Death to null
-^^^^^^^^^^^^^
-
-* Introducing Option (aka Maybe in Haskell)
-* Collection of None or Some element
-
-.. code-block:: scala
-
-    trait Option[T]
-    case class Some[T](val t:T) extends Option[T]
-    case object None extends Option[Nothing]
 
 -----
 
@@ -648,6 +677,20 @@ Death to null
 Death to null
 ^^^^^^^^^^^^^
 
+* Introducing Option (aka Maybe in Haskell)
+* Collection of None or Some element
+
+.. code-block:: scala
+
+    trait Option[T]
+    case class Some[T](val t:T) extends Option[T]
+    case object None extends Option[Nothing]
+
+-----
+
+Death to null
+^^^^^^^^^^^^^
+
 * Better?
 
 .. code-block:: scala
@@ -671,7 +714,7 @@ Death to null
 .. code-block:: scala
 
     val map = Map("a" -> Map("b" -> "c"))
-    for (a <- map("a"); b <- a.get("b")) {
+    for (a <- map.get("a"); b <- a.get("b")) {
         doSomething(b)
     }
 
@@ -706,12 +749,14 @@ Pimp my library
 .. code-block:: scala
 
     class RichInt(val i:Int) {
-        def plus(j:Int):Int = i + j
+        def until(j:Int):Range[Int] = ...
     }
 
     implicit def int2rich(i:Int):RichInt = new RichInt(i)
     
-    1 plus 2
+    for (i <- 1 until 10) ...
+    
+    for (i <- int2rich(1).until(10)) ...
 
 * Searches the 'scope' for methods that return a type with missing method
 * Very useful - but use with care!
@@ -728,6 +773,20 @@ What's the catch?
 
 ----
 
+Resources
+=========
+
+* "Programming in Scala" by Martin Odersky, Lex Spoon, and Bill Venners
+    - 1st Edition - http://www.artima.com/pins1ed/
+    - 2nd Edition - http://www.amazon.com/Programming-Scala-Comprehensive-Step-Step/dp/0981531644
+* Scala for Java Refugees
+    - http://www.codecommit.com/blog/scala/roundup-scala-for-java-refugees
+* Brisbane Functional Programming Group (BFPG)
+    - http://www.bfpg.org/
+    - Don't be afraid! Join us. :)
+
+----
+
 Conclusion
 ==========
 
@@ -735,24 +794,6 @@ Conclusion
 * Much, much more - only scratched the surface
 * Full compatibility with Java
 * Start using it today!
-
-----
-
-Resources
-=========
-
-* "Programming in Scala" by Martin Odersky, Lex Spoon, and Bill Venners
-    - 1st Edition
-        - Free
-        - http://www.artima.com/pins1ed/
-    - 2nd Edition
-        - Updated collection chapters for Scala 2.8
-        - http://www.amazon.com/Programming-Scala-Comprehensive-Step-Step/dp/0981531644
-* Scala for Java Refugees
-    - http://www.codecommit.com/blog/scala/roundup-scala-for-java-refugees
-* Brisbane Functional Programming Group (BFPG)
-    - http://www.bfpg.org/
-    - Don't be afraid! Join us. :)
 
 ----
 
