@@ -16,9 +16,9 @@ object Main {
 
     someMethod(1, 2)
 
-    def hasBlock(o: AnyRef)(f: => Unit) = f
+    def synchronized(o: AnyRef)(f: => Unit) = f
 
-    hasBlock("") {
+    synchronized("") {
       println("block")
     }
   }
@@ -62,7 +62,7 @@ object Main {
 
   def functions = {
     val plus = (a: Int, b: Int) => a + b
-    val multi:Function2[Int, Int, Int] = (a: Int, b: Int) => a * b
+    val multi: Function2[Int, Int, Int] = (a: Int, b: Int) => a * b
     plus(1, 2)
     multi(2, 3)
 
@@ -78,10 +78,10 @@ object Main {
     val s = l(3)
 
     object List2 {
-        def apply(args:String*) = new List2(args.toArray)
+      def apply(args: String*) = new List2(args.toArray)
     }
-    class List2(args:Array[String]) {
-        def apply(i:Int) = args(i)
+    class List2(args: Array[String]) {
+      def apply(i: Int) = args(i)
     }
     List("a", "b", "c")
 

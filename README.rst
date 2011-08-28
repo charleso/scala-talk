@@ -151,16 +151,6 @@ DSLs
     a someMethod "one value"
     a someMethod ("two", "values")
 
-* Last argument can be passed as block
-
-.. code-block:: scala
-
-    def synchronized(o:AnyRef)(f:  => Unit) = f
-
-    synchronized(this) {
-        // ...
-    }
-
 * Unicode method names
     - *not* operator overloading
 
@@ -184,7 +174,7 @@ DSL
         // Do something
     }
 
-* Should really just be a function call
+* Last argument can be passed as block
 
 .. code-block:: scala
 
