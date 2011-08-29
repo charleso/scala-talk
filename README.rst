@@ -10,6 +10,7 @@ Me
 * Charles O'Farrell
 * Mincom (4 years)
 * @charlesofarrell
+* https://github.com/charleso/scala-talk
 
 ----
 
