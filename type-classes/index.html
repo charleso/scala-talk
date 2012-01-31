@@ -1,0 +1,171 @@
+
+<!doctype html>  
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8">
+    
+    <title>Type Classes</title>
+
+    <meta name="description" content="TODO">
+    <meta name="author" content="Charles O&apos;Farrell">
+    
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reset.css">
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/main.css">
+
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/lib/zenburn.css">
+  </head>
+  
+  <body>
+    
+    <div id="reveal">
+      
+      <div class="slides">
+        <section>
+          <h1>Type Classes</h1>
+          <h3 class="inverted">as Objects and Implicits</h2>
+          <p>What are type classes,</p>
+          <p>how can they help</p>
+          <p>and why can&apos;t we get them in</p>
+          <p>stupid ol&apos; Java?</p>
+        </section>
+
+        <section>
+          <h2>Me</h2>
+          <ul>
+            <li>Charles O&apos;Farrell</li>
+            <li>Atlassian (3 weeks)</li>
+            <li><a href="http://twitter.com/charlesofarrell">@charlesofarrell</a></li>
+          </u>
+        </section>
+
+        <section>
+          <h2>Introduction</h2>
+          <ul>
+            <li>What are type classes?</li>
+            <li>Some examples</li>
+          </u>
+        </section>
+
+        <section>
+          <h2>Example</h2>
+          <section>
+            <p>Sorting a list of Strings</p>
+            <pre><code contenteditable>
+List<String> list = ...
+Collections.sort(list)
+            </code></pre>
+          </section>
+
+          <section>
+            <p>What happens if we don&apos;t (or can&apos;t) impliment Comparable?</p>
+            <pre><code contenteditable>
+List<File> list = ...
+Collections.sort(list, new Comparator<File>(){
+  @Override
+  public int compare(File f1, File f2) {
+    return ...
+  }
+})
+            </code></pre>
+          </section>
+
+          <section>
+            <p>What about Scala?</p>
+            <pre><code contenteditable>
+List("a", "b").sort()
+// Won't compile!
+List(new NotSortable()).sort();
+            </code></pre>
+          </section>
+
+          <section>
+            <p>How does it work?</p>
+            <pre><code contenteditable>
+def sort [T] (xs : List [T]) (implicit ordT : Ord [T]) : List [T]
+            </code></pre>
+          </section>
+        </section>
+
+        <section>
+          <h2>Complex</h2>
+          <p>
+            CanBuildFrom?
+          </p>
+        </section>
+
+        <section>
+          <h2>Better than inheritence</h2>
+          <ul>
+            <li>Monoid - empty</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>The Catch?</h2>
+          <ul>
+            <li>Compile time only</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Resources</h2>
+          <ul>
+            <li><a href="http://ropas.snu.ac.kr/~bruno/papers/TypeClasses.pdf"/>Odersky</a></li>
+            <li><a href="http://blog.tmorris.net/the-power-of-type-classes-with-scala-implicit-defs"/>Tony Morris</a></li>
+            <li><a href="http://debasishg.blogspot.com.au/2010/06/scala-implicits-type-classes-here-i.html">Debasishg</a></li>
+            <li><a href="http://lambda-the-ultimate.org/node/4039">Lambda The Ultimate</a></li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- The navigational controls UI -->
+      <aside class="controls">
+        <a class="left" href="#">&#x25C4;</a>
+        <a class="right" href="#">&#x25BA;</a>
+        <a class="up" href="#">&#x25B2;</a>
+        <a class="down" href="#">&#x25BC;</a>
+      </aside>
+
+      <!-- Displays presentation progress, max value changes via JS to reflect # of slides -->
+      <div class="progress"><span></span></div>
+      
+    </div>
+    
+    <script src="http://lab.hakim.se/reveal-js/js/reveal.js"></script>
+    <script src="http://lab.hakim.se/reveal-js/lib/highlight.js"></script>
+    <script>
+      // Parse the query string into a key/value object
+      var query = {};
+      location.search.replace( /[A-Z0-9]+?=(\w*)/gi, function(a) {
+        query[ a.split( '=' ).shift() ] = a.split( '=' ).pop();
+      } );
+
+      Reveal.initialize({
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // If true; each slide will be pushed to the browser history
+        history: true,
+
+        // Apply a 3D roll to links on hover
+        rollingLinks: true,
+
+        // UI style
+        theme: query.theme || 'default', // default/neon
+
+        // Transition style
+        transition: query.transition || 'default' // default/cube/page/concave/linear(2d)
+      });
+
+      hljs.initHighlightingOnLoad();
+    </script>
+
+
+  </body>
+</html>
