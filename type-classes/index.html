@@ -57,6 +57,9 @@
             <pre><code contenteditable>
 List&lt;String&gt; list = ...
 Collections.sort(list)
+public class Collections {
+  public static &lt;T extends Comparable&lt;? super T>&gt; void sort(List&lt;T&gt; list)
+}
             </code></pre>
           </section>
 
@@ -80,6 +83,7 @@ List("a", "b").sorted
 // Won't compile!
 List(new NotSortable()).sorted;
             </code></pre>
+            <p>Can't do this in Java</p>
           </section>
 
           <section>
@@ -90,32 +94,51 @@ trait Ordering[T] {
 }
 
 class List[T] {
-  def sorted[T](implicit ordering: Ordering[T]): List[T]
+  def sorted(implicit ordering: Ordering[T]): List[T]
 }
 </code></pre>
           </section>
 
           <section>
+            <pre><code>
+List("a", "b").sorted
+            </code></pre>
             <p>scalac -Xprint:typer</p>
             <pre><code>
-immutable.this.List.apply[Int](1, 2, 3).sorted[Int](math.this.Ordering.Int)
+immutable.this.List.apply[String]("a", "b").sorted[Int](Ordering.String)
             </code></pre>
           </section>
 
           <section>
             <pre><code>
 object Ordering {
-  implicit object Int extends Ordering[Int] {
-    def compare(x: Int, y: Int) =
-      if (x &lt; y) -1
-      else if (x == y) 0
-      else 1
+  implicit object String extends Ordering[String] {
+    def compare(x: String, y: String) = x.compareTo(y)
   }
 }
             </code></pre>
           </section>
         </section>
 
+        <section>
+            <p>What do I need?</p>
+            <pre><code>
+def someMethod(a:A, b:B)(implicit x: X[A], y: Y[B])
+object implicit M extends X[A]
+// Name of implicit method/object is not important
+implicit def b2Y = new Y[B]
+            </code></pre>
+        </section>
+
+        <section>
+          <p>Remember you can pass different values at call site</p>
+          <pre><code>
+List("a", "b").sorted(new Ordering[String] {
+    def compare(a: String, b: String) = 0
+})
+          </code></pre>
+        </section>
+        
         <section>
           <p>Where does Scala look for implicits</p>
           <p>
@@ -147,14 +170,20 @@ object Ordering {
 
         <section>
           <h2>The Catch?</h2>
-          <p>Compile time only</p>
-          <pre><code>
+          <section>
+            <p>Compile time only</p>
+            <pre><code>
 List(1, 2, 3).sorted
 // Doesn't compile
 def sortList[A](list:List[A]) = list.sorted
 // Need to 'pass around' the type class
 def sortList[A](list:List[A])(implicit ord:Ordering[A]) = list.sorted
             </code></pre>
+          </section>
+          <section>
+            <!-- TODO: Do we want to say this? -->
+            <p>Slows down the compiler too :(</p>
+          </section>
         </section>
 
         <section>
@@ -193,10 +222,10 @@ def concat(list: List[String]) = list.foldLeft("")(_ + _)
           </section>
           <section>
             <pre><code>
-  trait Appender[T] {
-    def zero: T
-    def plus(a: T, b: T): T
-  }
+trait Appender[T] {
+  def zero: T
+  def plus(a: T, b: T): T
+}
             </code></pre>
           </section>
 
@@ -209,16 +238,16 @@ def concat(list: List[String]) = list.foldLeft("")(_ + _)
           </section>
 
           <section>
-              <p>Something to instantly drive fear into the hearts of Java programmers</p>
+              <p>Something to drive fear into the hearts of Java programmers</p>
           </section>
 
           <section>
             <p>Monoid - Fuck yeah!</p>
             <pre><code>
-  trait Monoid[T] {
-    def zero: T
-    def plus(a: T, b: T): T
-  }
+trait Monoid[T] {
+  def zero: T
+  def plus(a: T, b: T): T
+}
             </code></pre>
           </section>
 
@@ -237,6 +266,12 @@ implicit def int2monoid = new Monoid[Int] {
   def plus(a: Int, b: Int) = a + b
 }
 sum(List(1, 2, 3))
+
+implicit def string2monoid = new Monoid[String] {
+  def zero = ""
+  def plus(a: String, b: String) = a + b
+}
+sum(List("a", "b", "c"))
             </code></pre>
           </section>
           <section>
@@ -255,6 +290,8 @@ trait Numeric[T]
 }
             </code></pre>
           </section>
+
+<!--
           <section>
             <pre><code>
 implicit def numeric2monoid[T](implicit i : Numeric[T]) = new Monoid[T] {
@@ -265,6 +302,8 @@ sum(List(1, 2, 3))
 sum(List(1.0, 2.0, 3.0))
             </code></pre>
           </section>
+-->
+
           <section>
             <p>You can't implement 'zero' with inheritence.</p>
             <pre><code>
@@ -291,31 +330,35 @@ public &lt;T extends Appender&gt; append(List&lt;T&gt; list) {
           <h2>Can Build From</h2>
 
           <section>
+            <p>Boring ol&apos; List.map</p>
             <pre><code>
 List(1, 2, 3) map { _ + 1 }
-// List[Int] = List(2, 3, 4)
+// List[Int]
 
 List(1, 2, 3) map { _.toString + "!" }
-// List[String] = List(1!, 2!, 3!)
+// List[String]
             </code></pre>
+            <p>Pay close attention to the <i>compiled</i> type</p>
           </section>
 
           <section>
+            <p>The same for BitSet, almost...</p>
             <pre><code>
 import collection.immutable.BitSet
 
 BitSet(1, 2, 3) map { _ + 1 }
-// BitSet = BitSet(2, 3, 4)
+// BitSet
 
 BitSet(1, 2, 3) map { _.toString + "!" }
-// Set[String] = Set(1!, 2!, 3!)
+// Set[String]
             </code></pre>
+            <p>WAT?!</p>
           </section>
 
           <section>
-            <p>What does map actually look like?</p>
+            <p>What do we think map would look like?</p>
             <pre><code>
-def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
+def map[B](f: A => B): List[B]
             </code></pre>
           </section>
 
@@ -325,6 +368,13 @@ def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
 val bits = BitSet(1, 2, 3)
 bits.map[Int, BitSet](_ + 1)(BitSet.canBuildFrom)
 bits.map[String, Set[String]](_.toString + "!")(Set.canBuildFrom[String])
+            </code></pre>
+          </section>
+
+          <section>
+            <p>What does map actually look like?</p>
+            <pre><code>
+def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
 
 object BitSet {
   implicit def canBuildFrom: CanBuildFrom[BitSet, Int, BitSet]
@@ -339,9 +389,10 @@ object Set {
             <h3>Why?</h3>
             <p>Otherwise how can you:</p>
             <ol>
-              <li>Make a compile safe return type?</li>
-              <li>Be influenced by generic type?</li>
-              <li>Share as much generic code as possible?</li>
+              <li>Make a compile safe return type</li>
+              <li>Be influenced by generic type</li>
+              <li>Share as much generic code as possible</li>
+              <!-- TODO - Can I show this easily?!? -->
             </ol>
           </section>
 
@@ -354,6 +405,60 @@ object Set {
             <a href="http://stackoverflow.com/questions/1722726/is-the-scala-2-8-collections-library-a-case-of-the-longest-suicide-note-in-hist">Is the Scala 2.8 collections library a case of "the longest suicide note in history"?</a>
             </li>
             </ul>
+          </section>
+          
+          <!--
+          <section>
+            <p>@usecase</p>
+            <pre><code>
+/** Builds a new collection by applying a function to all elements of list.
+ *  @usecase def map[B](f: A =&gt; B): $Coll[B] 
+ */
+def map[B, That](f: A =&gt; B)(implicit bf: CanBuildFrom[Repr, B, That]): That
+            </code></pre>
+            <iframe src="http://www.scala-lang.org/api/current/scala/collection/immutable/List.html#map%5BB%5D((A)%20%E2%87%92%20B)%3AList%5BB%5D" width="100%" height="50%">
+            </iframe>
+          </section>
+          -->
+        </section>
+
+        <section>
+          <h2>Food for thought</h2>
+          <section>
+            <p>Why do we have to override/assume methods on Object?</p>
+            <ul>
+              <li>toString()</li>
+              <li>hashCode()</li>
+            </ul>
+            <p>Dangerous when it comes to inheritence</p>
+          </section>
+          <section>
+            <pre><code>
+trait Show[A] {
+  def show(a: A): String
+}
+def printMe[A](a: A)(implicit s: Show[A]) = "Showing " + s.show(a)
+implicit def string2show = new Show[String] {
+  def show(a: String) = a.toUpperCase;
+}
+printMe("Hello World")
+// Doesn't compile
+printMe(1)
+            </code></pre>
+          </section>
+          <section>
+            <pre><code>
+class A {
+  override def toString = "Only A"
+}
+class B extends A
+implicit def a2show = new Show[A] {
+  def show(a: A) = a.toString;
+}
+printMe(new A)
+// Doesn't compile
+printMe(new B)
+            </code></pre>
           </section>
         </section>
 
@@ -371,14 +476,20 @@ object Set {
         <section>
           <h2>Resources</h2>
           <ul>
-            <li><a href="http://ropas.snu.ac.kr/~bruno/papers/TypeClasses.pdf"/>Odersky</a></li>
-            <li><a href="http://blog.tmorris.net/the-power-of-type-classes-with-scala-implicit-defs"/>Tony Morris</a></li>
-            <li><a href="http://debasishg.blogspot.com.au/2010/06/scala-implicits-type-classes-here-i.html">Debasishg</a></li>
-            <li><a href="http://lambda-the-ultimate.org/node/4039">Lambda The Ultimate</a></li>
+            <li><a href="http://ropas.snu.ac.kr/~bruno/papers/TypeClasses.pdf"/>Odersky - Type Classes as Objects and Implicits
+</a></li>
+            <li><a href="http://blog.tmorris.net/the-power-of-type-classes-with-scala-implicit-defs"/>Tony Morris - The Power of Type Classes</a></li>
             <li><a href="http://vimeo.com/10482466">Nick Partridge - Scalaz</a></li>
-            <li><a href="http://stackoverflow.com/questions/1722726/is-the-scala-2-8-collections-library-a-case-of-the-longest-suicide-note-in-hist">Martin Odersky - StackOverflow</a></li>
           </ul>
         </section>
+
+        <section>
+          <h2>Conclusion</h2>
+          <p>You're probably already using them</p>
+          <p>Inheritence is so 5 minutes ago</p>
+          <!-- NOTES: If you're willing to accept the premise that inheritence is bad, then type-classes are a great alternative -->
+        </section>
+
       </div>
 
       <!-- The navigational controls UI -->
