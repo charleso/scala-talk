@@ -205,7 +205,7 @@ val ordT = implicitly[Ordering[T]]
         </section>
 
         <section>
-          <h2>Meh</h2>
+          <h2>But wait, there&apos; more...</h2>
         </section>
 
         <section>
@@ -358,14 +358,20 @@ BitSet(1, 2, 3) map { _.toString + "!" }
           <section>
             <p>What do we think map would look like?</p>
             <pre><code>
-def map[B](f: A => B): List[B]
+class BitSet[A] {
+  def map[B](f: A => B): BitSet[B]
+}
             </code></pre>
           </section>
 
           <section>
             <p>What does map actually look like?</p>
             <pre><code>
-def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
+class List[A] extends GenTraversableLike[A, List]
+class BitSet extends GenTraversableLike[Int, BitSet]
+class GenTraversableLike[A, Repr] {
+  def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
+}
             </code></pre>
           </section>
 
@@ -390,6 +396,19 @@ object Set {
           </section>
 
           <section>
+            <pre><code>
+class TraversableLike[A, Repr] {
+  def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That = {
+    val b = bf(repr)
+    b.sizeHint(this)
+    for (x <- this) b += f(x)
+    b.result
+  }
+}
+            </code></pre>
+          </section>
+
+          <section>
             <h3>Why?</h3>
             <p>Otherwise how can you:</p>
             <ol>
@@ -407,6 +426,9 @@ object Set {
             </li>
             <li>
             <a href="http://stackoverflow.com/questions/1722726/is-the-scala-2-8-collections-library-a-case-of-the-longest-suicide-note-in-hist">Is the Scala 2.8 collections library a case of "the longest suicide note in history"?</a>
+            </li>
+            <li>
+            <a href="http://www.artima.com/shop/programming_in_scala">Programming in Scala - 2nd Edition</a>
             </li>
             </ul>
           </section>
