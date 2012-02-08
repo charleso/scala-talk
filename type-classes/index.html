@@ -452,16 +452,16 @@ printMe(1)
           </section>
           <section>
             <pre><code>
-class A {
-  override def toString = "Only A"
+class Parent {
+  override def toString = "Parent only"
 }
-class B extends A
+class Child extends Parent
 implicit def a2show = new Show[A] {
   def show(a: A) = a.toString;
 }
-printMe(new A)
+printMe(new Parent)
 // Doesn't compile
-printMe(new B)
+printMe(new Child)
             </code></pre>
           </section>
         </section>
