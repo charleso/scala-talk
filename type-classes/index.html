@@ -363,6 +363,13 @@ def map[B](f: A => B): List[B]
           </section>
 
           <section>
+            <p>What does map actually look like?</p>
+            <pre><code>
+def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
+            </code></pre>
+          </section>
+
+          <section>
             <p>scalac -Xprint:typer</p>
             <pre><code>
 val bits = BitSet(1, 2, 3)
@@ -372,10 +379,7 @@ bits.map[String, Set[String]](_.toString + "!")(Set.canBuildFrom[String])
           </section>
 
           <section>
-            <p>What does map actually look like?</p>
             <pre><code>
-def map[B, That](f: A => B)(implicit bf: CanBuildFrom[Repr, B, That]): That
-
 object BitSet {
   implicit def canBuildFrom: CanBuildFrom[BitSet, Int, BitSet]
 }
