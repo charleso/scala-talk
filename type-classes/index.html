@@ -121,8 +121,9 @@ object Ordering {
             <p>What do I need?</p>
             <pre><code>
 def someMethod(a:A, b:B)(implicit x: X[A], y: Y[B])
-object implicit M extends X[A]
+
 // Name of implicit method/object is not important
+object implicit M extends X[A]
 implicit def b2Y = new Y[B]
             </code></pre>
         </section>
