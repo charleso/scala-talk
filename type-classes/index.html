@@ -207,7 +207,7 @@ val ordT = implicitly[Ordering[T]]
         </section>
 
         <section>
-          <h2>Better than inheritence?</h2>
+          <h2>Better than inheritance?</h2>
           <section>
           <p>Are these not the same?</P>
             <pre><code>
@@ -303,7 +303,7 @@ sum(List(1.0, 2.0, 3.0))
 -->
 
           <section>
-            <p>You can't implement 'zero' with inheritence.</p>
+            <p>You can't implement 'zero' with inheritance.</p>
             <pre><code>
 public &lt;T extends Appender&gt; append(List&lt;T&gt; list) {
   T last = null;
@@ -454,7 +454,7 @@ def map[B, That](f: A =&gt; B)(implicit bf: CanBuildFrom[Repr, B, That]): That
               <li>toString()</li>
               <li>hashCode()</li>
             </ul>
-            <p>Dangerous when it comes to inheritence</p>
+            <p>Dangerous when it comes to inheritance</p>
           </section>
           <section>
             <pre><code>
@@ -510,8 +510,8 @@ printMe(new Child)
         <section>
           <h2>Conclusion</h2>
           <p>You're probably already using them</p>
-          <p>Inheritence is so 5 minutes ago</p>
-          <!-- NOTES: If you're willing to accept the premise that inheritence is bad, then type-classes are a great alternative -->
+          <p>inheritance is so 5 minutes ago</p>
+          <!-- NOTES: If you're willing to accept the premise that inheritance is bad, then type-classes are a great alternative -->
         </section>
 
       </div>
