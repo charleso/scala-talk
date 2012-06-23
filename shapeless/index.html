@@ -1,0 +1,638 @@
+
+<!doctype html>  
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8">
+    
+    <title>Shapeless</title>
+
+    <meta name="description" content="TODO">
+    <meta name="author" content="Charles O&apos;Farrell">
+    
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reset.css">
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/main.css">
+
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/lib/zenburn.css">
+    <style type="text/css">
+    #reveal code {
+      font-size: 120%;
+      line-height: 2;
+    }
+    ul {
+      padding-left: 1em;
+    }
+    </style>
+  </head>
+  
+  <body>
+    
+    <div id="reveal">
+      
+      <div class="slides">
+        <section>
+          <h1>Shapeless</h1>
+        </section>
+
+        <section>
+          <h2>Me</h2>
+          <ul>
+            <li>Charles O&apos;Farrell</li>
+            <li>Atlassian</li>
+            <li><a href="http://twitter.com/charlesofarrell">@charlesofarrell</a></li>
+          </u>
+        </section>
+
+        <section>
+          <h2>What is shapeless?</h2>
+          <p><i>Shapeless is an exploration of generic (aka polytypic) programming in Scala</i></p>
+        </section>
+
+        <section>
+          <h2>What is shapeless?</h2>
+          <img src="http://1.bp.blogspot.com/-H0FTbP4Nwcg/TYP5sVvaQfI/AAAAAAAAABk/gtBJlmVO20I/s1600/SolInvictus_SplashPage.png" />
+        </section>
+
+        <section>
+          <h2>Miles Sabin</h2>
+          <p>Voodoo master</p>
+          <img src="miles-sabin.jpg" />
+        </section>
+
+        <section>
+          <h2>Unboxed Types</h2>
+          <p>'Tag' a type with additional type information</p>
+          <p><i>without</i> 'boxing'</p>
+          <p>Easier if I just show you...</p>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 1</h2>
+          <pre><code>
+def div(text : String) = "&lt;div&gt;" + text + "&lt;/div&gt;"
+div("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
+          </code></pre>
+          <p>How do we know 'string' has been escaped?</p>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 1</h2>
+          <pre><code>
+sealed trait SafeString
+
+def escape(s : String) : String @@ SafeString = tag[SafeString](s.replace("&lt;", "&amp;lt;"))
+
+def html(text : String @@ SafeString) = "&lt;div&gt;" + text + "&lt;/div&gt;"
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 1</h2>
+          <pre><code>
+// div("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
+
+div(escape("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;"))
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 1</h2>
+          <p>If we decompile:</p>
+          <pre><code>
+public String escape(String s) {
+    return s.replace("&lt;", "&amp;lt;");
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 2</h2>
+          <p>Scalaz use it do distinguish multiple implementations of a type class</p>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 2</h2>
+          <pre><code>
+implicit val plus = new Monoid[Int] {
+  def zero = 0
+  def append(a : Int, b : Int) = a + b
+}
+implicit val multiply = new Monoid[Int] {
+  def zero = 1
+  def append(a : Int, b : Int) = a * b
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 2</h2>
+          <pre><code>
+2 |+| 3
+> 5
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types - Example 2</h2>
+          <pre><code>
+def Multiplication[A](a: A) = tag[Multiplication](a)
+
+Multiplication(2) |+| Multiplication(3)
+> 6
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Unboxed Types</h2>
+          <p>We also use it at Atlassian:</p>
+          <pre><code>
+trait Identify[T] {
+  type Id = java.lang.Long @@ T
+}
+object Application extends Identify[Application]
+object Plugin extends Identify[Plugin]
+
+def findApplication(id: Application.Id) = dao.find(id)
+          </code></pre>
+        </section>
+
+
+
+
+
+
+
+
+        <section>
+          <h2>Part 2</h2>
+          <p><i>"The mother of all Scala HList's"</i></p>
+        </section>
+
+        <section>
+          <h2>List</h2>
+          <pre><code>
+val list = "a" :: "b" :: "c" :: Nil
+> List[String]
+list.map(_.length)
+> List[Int]
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>List</h2>
+          <pre><code>
+val list = "string" :: 1 :: true :: Nil
+> List[Any]
+list.map {
+  case x : Int => x.toString
+  case s : String => s.length
+  case _ => 0
+}
+> List[Any]
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Heterogeneous List</h2>
+          <p>aka HList</p>
+          <pre><code>
+import shapeless._
+"string" :: 1 :: true :: HNil
+> String :: Int :: Boolean :: HNil
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Heterogeneous List</h2>
+          <pre><code>
+val hlist = "string" :: 1 :: true :: HNil
+// def singleton[A](a: A) = Set(a)
+hlist.map(singleton)
+> Set[String] :: Set[Int] :: Set[Boolean] :: HNil
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Heterogeneous List</h2>
+          <p>Let's try:</p>
+          <pre><code>
+val hlist = "string" :: 1 :: true :: HNil
+hlist.map(a => Set(a))
+> error: missing parameter type
+> error: could not find implicit value for parameter mapper: Mapper[=>, String :: Int :: Boolean :: HNil]
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Voodoo I tell you!</h2>
+          <img src="http://images.icanhascheezburger.com/completestore/2009/4/14/128842061323757494.jpg" />
+        </section>
+
+        <section>
+          <h2>Detour</h2>
+          <img src="detour.jpg" />
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>Don't we have them already?</p>
+          <pre><code>
+def monomorphic(s : String) : Int = s.length]
+monomorphic("foo") 
+
+def polymorphic[T](l : List[T]) : Int = l.length
+polymorphic(List(1, 2, 3))
+polymorphic(List("foo", "bar", "baz"))
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <pre><code>
+def singleton[A](a: A) = Set(a)
+List("a", "b").map(singleton)
+> List[Set[String]]
+
+// set scalacOptions += "-Xprint:typer"
+List("a", "b").map((a: String) => singleton[String](a))
+
+// This is known as eta-expansion.
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>Remember</p>
+          <pre><code>
+trait Function1[-T, +R] {
+  def apply(t : T) : R
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>What we want (sort of):</p>
+          <pre><code>
+trait PolyFunction1 {
+  def apply[T, R](t : T) : R
+}
+// This doesn't compile
+object singleton extends PolyFunction1 {
+   def apply[T, R >: Set[T]](s : T): R = Set(s)
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>Let's use higher kinded types!</p>
+          <pre><code>
+trait PolyFunction1[F[_]] {
+  def apply[T](t : T) : F[T]
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <pre><code>
+object singleton extends PolyFunction1[Set] {
+  def apply[T](t : T) : Set[T] = Set(t)
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <pre><code>
+val hlist = List("a", "b") :: List(1, 2) :: List[Boolean]() :: HNil
+hlist.map(headOption)
+> Option[String] :: Option[Int] :: Option[Boolean] :: HNil =
+  Some("a")      :: Some(1)      :: None           :: HNil
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>But, doesn't work for headOption.</p>
+          <pre><code>
+object headOption extends PolyFunction1[Option] {
+  // Ahh how do we know t is a List?!?
+  def apply[T](t : T) : Option[T] = list.headOption
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>Take 2</p>
+          <pre><code>
+trait PolyFunction1[F[_], G[_]] {
+  def apply[T](f : F[T]) : G[T]
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <pre><code>
+object headOption extends PolyFunction1[List, Option] {
+  def apply[T](l : List[T]) : Option[T] = l.headOption
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <p>What about singleton?</p>
+          <pre><code>
+type Id[T] = T
+object singleton extends PolyFunction1[Id, Set] {
+  def apply[T](t : T) : Set[T] = Set(t)
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Sugar!</h2>
+          <img src="http://4.bp.blogspot.com/-b9cHfJRUEiw/TaKzWqJICyI/AAAAAAAAAjM/PSrXikHJ-Z8/s1600/nowihazsugar128638019866427462.jpg" />
+        </section>
+
+        <section>
+          <h2>Polymorphic Functions</h2>
+          <pre><code>
+trait ~>[F[_], G[_]] {
+  def apply[T](f : F[T]) : G[T]
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <pre><code>
+object singleton extends (Id ~> Set) {
+  def apply[T](t : T) = Set(t)
+}
+object headOption extends (List ~> Option) {
+  def apply[T](l : List[T]) : Option[T] = l.headOption
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>What about a more complex example?</p>
+          <pre><code>
+object size extends (Id ~> Id) {
+  def apply[T](t : T) : Int = t match {
+    case x : Int => x.toString
+    case s : String  => s.toUpperCase
+    case _ => false
+  }
+}
+          </code></pre>
+          <p>Hmm, not very type safe</p>
+          <p>May as well use List[Any]</p>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Use implicits!</p>
+          <p>Hand waving</p>
+          <p>Look over there...</p>
+          <p></p>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Presto!</p>
+          <pre><code>
+object complex extends Poly1 {
+   implicit def caseInt = at[Int](_.toString)
+   implicit def caseString = at[String](_.length)
+ }
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <pre><code>
+val list = "a" :: 1 :: "b" :: HNil
+list.map(complex)
+> Int :: String :: Int :: HNil = 1 :: "1" : 1 :: HNil
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Under the hood</p>
+          <pre style="width: 1300px; margin-left: -200px;"><code>
+ val y = ("a" :: 1 :: "b" :: HNil).map(complex)(
+                    Mapper.mapper         [complex.type,  String :: Int :: String :: HNil,    Int :: String :: Int :: HNil](
+                    MapperAux.hlistMapper1[complex.type,  String, Int, Int :: String :: HNil, String :: Int :: HNil](
+complex.caseString, MapperAux.hlistMapper1[complex.type,  Int, String, String :: HNil,        Int :: HNil](
+complex.caseInt,    MapperAux.hlistMapper1[complex.type,  String, Int, HNil,                  HNil](
+complex.caseString, MapperAux.hnilMapper1 [complex.type]
+)))))
+          </code></pre>
+        </section>
+
+        <section>
+          <img src="http://fc05.deviantart.net/fs40/f/2009/032/2/2/Exploding_Head_Animation_by_Vaneetra.gif" />
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Cool stuff they can do</p>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Tuples</p>
+          <pre><code>
+val t1 = (23, "foo", 2.0, true)
+
+l1 = t1.hlisted
+> 23 :: "foo" :: 2.0 :: true :: HNil
+
+> l1.tupled
+> (23, "foo", 2.0, true)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Case Classes</p>
+          <pre><code>
+case class Foo(i : Int, s : String, d : Double)
+implicit def fooIso = HListIso(Foo.apply _, Foo.unapply _)
+
+case class Bar(s : String, d : Double)
+implicit def barIso = HListIso(Bar.apply _, Bar.unapply _)
+
+val list = toHList(Foo(0, "a", 1.2))
+> Int :: String :: Double :: HNil
+
+val shorterList = list.tail
+> String :: Double :: HNil
+
+fromHList(shorterList)
+> Bar("a", 1.2)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Free Monoids</p>
+          <pre><code>
+Foo(13, "foo", 1.0) |+| Foo(23, "bar", 3.0)
+> Foo(36, "foobar", 4.0)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Zipper</p>
+          <pre><code>
+val l = 1 :: "foo" :: 3.0 :: HNil
+
+l.toZipper.right.put("wibble", 45).toHList
+> 1 :: ("wibble", 45) :: 3.0 :: HNil
+
+l.toZipper.right.delete.toHList
+> 1 :: 3.0 :: HNil
+
+l.toZipper.last.left.insert("bar").toHList
+> 1 :: "foo" :: "bar" :: 3.0 :: HNil
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example</p>
+          <pre><code>
+class CalculatorResource {
+  @Path("add/{a}/to/{b}")
+  def add(@Param("a") a: Int, @Param("b") b: Int) = ...
+}
+def addUrl(a: Int, b: Int) = "add/" + a + "/to/" + b
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example - <a href="http://bigtopweb.com/routes/">Bigtop Routes</a></p>
+          <pre><code>
+object Calculator extends Site {
+  val add =
+    ("add" :/: IntArg :/: "to" :/: IntArg :/: end) >>
+      (a: Int, b: Int) => ...
+}
+Calculator.add.url(1, 2) // ==> bigtop.core.Url("/add/1/to/2")
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Theres more...</h2>
+          <ul>
+            <li>Heterogenous maps</li>
+            <li>Extensible records</li>
+            <li>Sized types</li>
+            <li>Type safe cast</li>
+            <li>Scrap your Boilerplate</li>
+            <li>Newtype</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Just for fun - Fibonacci</h2>
+          <pre><code>
+import Fibonacci._
+typed[_0](fibonacci(_0))
+typed[_1](fibonacci(_1))
+typed[_1](fibonacci(_2))
+typed[_2](fibonacci(_3))
+typed[_3](fibonacci(_4))
+typed[_5](fibonacci(_5))
+typed[_8](fibonacci(_6))
+typed[_13](fibonacci(_7))
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Want more?</h2>
+          <p>Comes to Miles' training (TODO Details here)</p>
+        </section>
+
+        <section>
+          <h2>References</h2>
+          <a href="http://www.chuusai.com/blog/">http://www.chuusai.com/blog/</a>
+          <a href="http://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/">http://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/</a>
+          <a href="http://etorreborre.blogspot.com.au/2011/11/practical-uses-for-unboxed-tagged-types.html">http://etorreborre.blogspot.com.au/2011/11/practical-uses-for-unboxed-tagged-types.html</a>
+          <a href="http://timperrett.com/2012/06/15/unboxed-new-types-within-scalaz7/">http://timperrett.com/2012/06/15/unboxed-new-types-within-scalaz7/</a>
+        </section>
+ 
+        <section>
+          <h2>Thank you</h2>
+        </section>
+ 
+      </div>
+
+      <!-- The navigational controls UI -->
+      <aside class="controls">
+        <a class="left" href="#">&#x25C4;</a>
+        <a class="right" href="#">&#x25BA;</a>
+        <a class="up" href="#">&#x25B2;</a>
+        <a class="down" href="#">&#x25BC;</a>
+      </aside>
+
+      <!-- Displays presentation progress, max value changes via JS to reflect # of slides -->
+      <div class="progress"><span></span></div>
+      
+    </div>
+    
+    <script src="http://lab.hakim.se/reveal-js/js/reveal.js"></script>
+    <script src="http://lab.hakim.se/reveal-js/lib/highlight.js"></script>
+    <script>
+      // Parse the query string into a key/value object
+      var query = {};
+      location.search.replace( /[A-Z0-9]+?=(\w*)/gi, function(a) {
+        query[ a.split( '=' ).shift() ] = a.split( '=' ).pop();
+      } );
+
+      String.prototype.trim=function(){return this.replace(/^\s\s*/, '').replace(/\s\s*$/, '');};
+
+      var codes = window.document.getElementsByTagName('code')
+      for (var i = 0; i < codes.length; i++) {
+        codes[i].innerHTML = codes[i].innerHTML.trim();
+      }
+
+      Reveal.initialize({
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // If true; each slide will be pushed to the browser history
+        history: true,
+
+        // Apply a 3D roll to links on hover
+        rollingLinks: true,
+
+        // UI style
+        theme: query.theme || 'default', // default/neon
+
+        // Transition style
+        transition: query.transition || 'default' // default/cube/page/concave/linear(2d)
+      });
+
+      hljs.initHighlightingOnLoad();
+    </script>
+
+
+  </body>
+</html>
