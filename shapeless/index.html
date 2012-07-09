@@ -108,6 +108,17 @@ public String escape(String s) {
         </section>
 
         <section>
+          <h2>Unboxed Types - Warning</h2>
+          <pre><code>
+def withUnboxed(i: Int @@ Foo): ...
+
+private final void withUnboxed(int i)
+{
+    BoxesRunTime.boxToInteger(i)
+}
+          </code></pre>
+        </section>
+        <section>
           <h2>Unboxed Types - Example 2</h2>
           <p>Scalaz use it do distinguish multiple implementations of a type class</p>
         </section>
@@ -137,7 +148,7 @@ implicit val multiply = new Monoid[Int] {
         <section>
           <h2>Unboxed Types - Example 2</h2>
           <pre><code>
-def Multiplication[A](a: A) = tag[Multiplication](a)
+def Multiplication[A](a: A): A @@ Multiplication = tag[Multiplication](a)
 
 Multiplication(2) |+| Multiplication(3)
 > 6
@@ -239,7 +250,7 @@ hlist.map(a => Set(a))
           <h2>Polymorphic Functions</h2>
           <p>Don't we have them already?</p>
           <pre><code>
-def monomorphic(s : String) : Int = s.length]
+def monomorphic(s : String) : Int = s.length
 monomorphic("foo") 
 
 def polymorphic[T](l : List[T]) : Int = l.length
@@ -281,7 +292,7 @@ trait PolyFunction1 {
 }
 // This doesn't compile
 object singleton extends PolyFunction1 {
-   def apply[T, R >: Set[T]](s : T): R = Set(s)
+   def apply[T, R &lt;: Set[T]](s : T): R = Set(s)
 }
           </code></pre>
         </section>
@@ -290,7 +301,7 @@ object singleton extends PolyFunction1 {
           <h2>Polymorphic Functions</h2>
           <p>Let's use higher kinded types!</p>
           <pre><code>
-trait PolyFunction1[F[_]] {
+trait PolyFunctionTake1[F[_]] {
   def apply[T](t : T) : F[T]
 }
           </code></pre>
@@ -299,7 +310,7 @@ trait PolyFunction1[F[_]] {
         <section>
           <h2>Polymorphic Functions</h2>
           <pre><code>
-object singleton extends PolyFunction1[Set] {
+object singleton extends PolyFunctionTake1[Set] {
   def apply[T](t : T) : Set[T] = Set(t)
 }
           </code></pre>
@@ -319,9 +330,9 @@ hlist.map(headOption)
           <h2>Polymorphic Functions</h2>
           <p>But, doesn't work for headOption.</p>
           <pre><code>
-object headOption extends PolyFunction1[Option] {
+object headOption extends PolyFunctionTake1[Option] {
   // Ahh how do we know t is a List?!?
-  def apply[T](t : T) : Option[T] = list.headOption
+  def apply[T](l : T) : Option[T] = l.headOption
 }
           </code></pre>
         </section>
@@ -386,7 +397,7 @@ object headOption extends (List ~> Option) {
           <h2>HList</h2>
           <p>What about a more complex example?</p>
           <pre><code>
-object size extends (Id ~> Id) {
+object complex extends (Id ~> Id) {
   def apply[T](t : T) : Int = t match {
     case x : Int => x.toString
     case s : String  => s.toUpperCase
@@ -399,10 +410,7 @@ object size extends (Id ~> Id) {
         </section>
 
         <section>
-          <h2>HList</h2>
-          <p>Use implicits!</p>
-          <p>Hand waving</p>
-          <p>Look over there...</p>
+          <img src="http://i.chzbgr.com/completestore/2011/1/17/0a3d6462-5e9b-48d1-b9b0-37142406f113.jpg" />
           <p></p>
         </section>
 
@@ -430,12 +438,12 @@ list.map(complex)
           <h2>HList</h2>
           <p>Under the hood</p>
           <pre style="width: 1300px; margin-left: -200px;"><code>
- val y = ("a" :: 1 :: "b" :: HNil).map(complex)(
-                    Mapper.mapper         [complex.type,  String :: Int :: String :: HNil,    Int :: String :: Int :: HNil](
-                    MapperAux.hlistMapper1[complex.type,  String, Int, Int :: String :: HNil, String :: Int :: HNil](
-complex.caseString, MapperAux.hlistMapper1[complex.type,  Int, String, String :: HNil,        Int :: HNil](
-complex.caseInt,    MapperAux.hlistMapper1[complex.type,  String, Int, HNil,                  HNil](
-complex.caseString, MapperAux.hnilMapper1 [complex.type]
+val y = ("a" :: 1 :: "b" :: HNil).map(complex)(
+Mapper.mapper         [complex.type,  String :: Int :: String :: HNil,    Int :: String :: Int :: HNil](
+MapperAux.hlistMapper1[complex.type,  String, Int, Int :: String :: HNil, String :: Int :: HNil]       (complex.caseString,
+MapperAux.hlistMapper1[complex.type,  Int, String, String :: HNil,        Int :: HNil]                 (complex.caseInt,
+MapperAux.hlistMapper1[complex.type,  String, Int, HNil,                  HNil]                        (complex.caseString,
+MapperAux.hnilMapper1 [complex.type]
 )))))
           </code></pre>
         </section>
@@ -532,6 +540,28 @@ object Calculator extends Site {
       (a: Int, b: Int) => ...
 }
 Calculator.add.url(1, 2) // ==> bigtop.core.Url("/add/1/to/2")
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example 2 - SQL</p>
+          <pre><code>
+List&lt;Object[]&gt; results = session.query("select a, b from Foo");
+// Unsafe results
+// Even with Hibernate/HQL - Constraints are the best we can do?!?
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example 2 - Theoretical</p>
+          <pre><code>
+trait Query {
+  def query[T &lt;: HList](a : Select[T]): Results[T]
+}
+val select = query.select[String]("a").select[Int]("b")
+val result: Results[String :: Int :: HNil] = session.query(select)
           </code></pre>
         </section>
 
