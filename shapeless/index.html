@@ -621,18 +621,18 @@ object WireAux {
     def toWire(l: HNil, s: DataInput) {}
     def fromWire(t: DataInput) = HNil
   }
-  implicit def hlist[InH, InT <: HList](implicit wf: WireFormat[InH], mt: WireAux[InT]) = new WireAux[InH :: InT] {
+  implicit def hlist[InH, InT &lt;: HList](implicit wf: WireFormat[InH], mt: WireAux[InT]) = new WireAux[InH :: InT] {
     def toWire(l: InH :: InT, out: DataInput) { wf.toWire(l.head, out); mt.toWire(l.tail, out) }
     def fromWire(in: DataInput): InH :: InT = wf.fromWire(in) :: mt.fromWire(in)
   }
 }
 
-def mkCaseWireFormat[T, L <: HList](apply: L => T, unapply: T => Option[L])(implicit aux: WireAux[L]) = new WireFormat[T] {
+def mkHListWireFormat[T, L &lt;: HList](apply: L =&gt; T, unapply: T =&gt; Option[L])(implicit aux: WireAux[L]) = new WireFormat[T] {
   def toWire(obj: T, out: DataInput) = aux.toWire(unapply(obj).get, out)
   def fromWire(in: DataInput) = apply(aux.fromWire(in))
 }
 
-mkCaseWireFormat((l: String :: HNil) => Something(l.head), (s: Something) => Some(s.toString :: HNil))
+mkHListWireFormat((l: String :: HNil) =&gt; Something(l.head), (s: Something) =&gt; Some(s.toString :: HNil))
           </code></pre>
         </section>
 
