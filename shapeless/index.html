@@ -566,6 +566,77 @@ val result: Results[String :: Int :: HNil] = session.query(select)
         </section>
 
         <section>
+          <h2>HList</h2>
+          <p>Example 3 - Tuples in Scoobi</p>
+          <pre><code>
+  def mkCaseWireFormat[T, A1: WireFormat, A2: WireFormat]
+    (apply: (A1, A2) => T, unapply: T => Option[(A1, A2)]): WireFormat[T]
+    = new WireFormat[T] {
+
+    override def toWire(obj: T, out: DataOutput) {
+      val v: Product2[A1, A2] = unapply(obj).get
+      implicitly[WireFormat[A1]].toWire(v._1, out)
+      implicitly[WireFormat[A2]].toWire(v._2, out)
+    }
+
+    override def fromWire(in: DataInput): T = {
+      val a1: A1 = implicitly[WireFormat[A1]].fromWire(in)
+      val a2: A2 = implicitly[WireFormat[A2]].fromWire(in)
+      apply(a1, a2)
+    }
+  }
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example 3 - Tuples in Scoobi</p>
+          <pre><code>
+def mkCaseWireFormat[T, A1: WireFormat, A2: WireFormat, A3: WireFormat]
+  (apply: (A1, A2, A3) => T, unapply: T => Option[(A1, A2, A3)])
+  = new WireFormat[T] {
+  override def toWire(obj: T, out: DataOutput) {
+    val v: Product3[A1, A2, A3] = unapply(obj).get
+    implicitly[WireFormat[A1]].toWire(v._1, out)
+    implicitly[WireFormat[A2]].toWire(v._2, out)
+    implicitly[WireFormat[A3]].toWire(v._3, out)
+  }
+
+  override def fromWire(in: DataInput): T = {
+    val a1: A1 = implicitly[WireFormat[A1]].fromWire(in)
+    val a2: A2 = implicitly[WireFormat[A2]].fromWire(in)
+    val a3: A3 = implicitly[WireFormat[A3]].fromWire(in)
+    apply(a1, a2, a3)
+  }
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>HList</h2>
+          <p>Example 3 - HLists in Scoobi</p>
+          <pre style="width: 1300px; margin-left: -200px;"><code>
+object WireAux {
+  implicit def hnil = new WireAux[HNil] {
+    def toWire(l: HNil, s: DataInput) {}
+    def fromWire(t: DataInput) = HNil
+  }
+  implicit def hlist[InH, InT <: HList](implicit wf: WireFormat[InH], mt: WireAux[InT]) = new WireAux[InH :: InT] {
+    def toWire(l: InH :: InT, out: DataInput) { wf.toWire(l.head, out); mt.toWire(l.tail, out) }
+    def fromWire(in: DataInput): InH :: InT = wf.fromWire(in) :: mt.fromWire(in)
+  }
+}
+
+def mkCaseWireFormat[T, L <: HList](apply: L => T, unapply: T => Option[L])(implicit aux: WireAux[L]) = new WireFormat[T] {
+  def toWire(obj: T, out: DataInput) = aux.toWire(unapply(obj).get, out)
+  def fromWire(in: DataInput) = apply(aux.fromWire(in))
+}
+
+mkCaseWireFormat((l: String :: HNil) => Something(l.head), (s: Something) => Some(s.toString :: HNil))
+          </code></pre>
+        </section>
+
+        <section>
           <h2>Theres more...</h2>
           <ul>
             <li>Heterogenous maps</li>
