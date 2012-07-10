@@ -71,8 +71,8 @@
         <section>
           <h2>Unboxed Types - Example 1</h2>
           <pre><code>
-def div(text : String) = "&lt;div&gt;" + text + "&lt;/div&gt;"
-div("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
+def template(text : String) = "&lt;div&gt;" + text + "&lt;/div&gt;"
+template("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
           </code></pre>
           <p>How do we know 'string' has been escaped?</p>
         </section>
@@ -84,16 +84,16 @@ sealed trait SafeString
 
 def escape(s : String) : String @@ SafeString = tag[SafeString](s.replace("&lt;", "&amp;lt;"))
 
-def html(text : String @@ SafeString) = "&lt;div&gt;" + text + "&lt;/div&gt;"
+def template(text : String @@ SafeString) = "&lt;div&gt;" + text + "&lt;/div&gt;"
           </code></pre>
         </section>
 
         <section>
           <h2>Unboxed Types - Example 1</h2>
           <pre><code>
-// div("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
+// template("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;")
 
-div(escape("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;"))
+template(escape("&lt;script&gt;alert('Scala is too hard')&lt;/script&gt;"))
           </code></pre>
         </section>
 
@@ -234,11 +234,6 @@ hlist.map(a => Set(a))
 > error: missing parameter type
 > error: could not find implicit value for parameter mapper: Mapper[=>, String :: Int :: Boolean :: HNil]
           </code></pre>
-        </section>
-
-        <section>
-          <h2>Voodoo I tell you!</h2>
-          <img src="http://images.icanhascheezburger.com/completestore/2009/4/14/128842061323757494.jpg" />
         </section>
 
         <section>
@@ -627,12 +622,13 @@ object WireAux {
   }
 }
 
-def mkHListWireFormat[T, L &lt;: HList](apply: L =&gt; T, unapply: T =&gt; Option[L])(implicit aux: WireAux[L]) = new WireFormat[T] {
-  def toWire(obj: T, out: DataInput) = aux.toWire(unapply(obj).get, out)
-  def fromWire(in: DataInput) = apply(aux.fromWire(in))
+def mkHListWireFormat[T, L &lt;: HList](iso: HListIso[T, L])(implicit aux: WireAux[L]) = new WireFormat[T] {
+  def toWire(obj: T, out: DataInput) = aux.toWire(iso.toHList(obj), out)
+  def fromWire(in: DataInput) = iso.fromHList(aux.fromWire(in))
 }
 
-mkHListWireFormat((l: String :: HNil) =&gt; Something(l.head), (s: Something) =&gt; Some(s.toString :: HNil))
+implicit val iso = HListIso(Something.apply _, Something.unapply _)
+val wf = mkHListWireFormat(iso)
           </code></pre>
         </section>
 
@@ -671,7 +667,6 @@ typed[_13](fibonacci(_7))
         <section>
           <h2>References</h2>
           <a href="http://www.chuusai.com/blog/">http://www.chuusai.com/blog/</a>
-          <a href="http://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/">http://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/</a>
           <a href="http://etorreborre.blogspot.com.au/2011/11/practical-uses-for-unboxed-tagged-types.html">http://etorreborre.blogspot.com.au/2011/11/practical-uses-for-unboxed-tagged-types.html</a>
           <a href="http://timperrett.com/2012/06/15/unboxed-new-types-within-scalaz7/">http://timperrett.com/2012/06/15/unboxed-new-types-within-scalaz7/</a>
         </section>
